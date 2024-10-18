@@ -1,75 +1,65 @@
 import sys
 import copy
-import pprint
 from collections import deque
+from itertools import combinations
 
 
-def count_safy_area(board, width, height):
+def count_safe_area(lab, width, height):
     safe = 0
-
     for y in range(height):
         for x in range(width):
-            if not board[y][x]:
+            if not lab[y][x]:
                 safe += 1
 
     return safe
 
 
-def extend_virus(board, width, height):
+def extend_virus(lab, width, height):
     q = deque()
     dir = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-    visited = [[False] * width for _ in range(height)]
 
     for y in range(height):
         for x in range(width):
-            if board[y][x] == 2:
+            if lab[y][x] == 2:
                 q.append((x, y))
-                visited[y][x] = True
 
     while q:
         x, y = q.popleft()
-
         for dx, dy in dir:
             nx, ny = x + dx, y + dy
-            if 0 <= nx < width and 0 <= ny < height and not visited[ny][nx] and not board[ny][nx]:
+            if 0 <= nx < width and 0 <= ny < height and not lab[ny][nx]:
+                lab[ny][nx] = 2
                 q.append((nx, ny))
-                visited[ny][nx] = True
-                board[ny][nx] = 2
 
-    return board
+    return lab
 
 
-def wall_install(board, visited, width, height, wall, safe):
-    if wall == 3:
-        virus_board = extend_virus(copy.deepcopy(board), width, height)
-        safe_area = count_safy_area(virus_board, width, height)
+def solution(lab, width, height):
+    empty_area = []
+    for y in range(height):
+        for x in range(width):
+            if not lab[y][x]:
+                empty_area.append((x, y))
 
-        if not safe:
-            safe.append(safe_area)
-        else:
-            safe[0] = max(safe_area, safe[0])
-        
-        return
+    max_safe = 0
+    for wall in combinations(empty_area, 3):
+        copy_lab = copy.deepcopy(lab)
+        for x, y in wall:
+            copy_lab[y][x] = 1
 
-    for h in range(height):
-        for w in range(width):
-            if not board[h][w] and not visited[h][w]:
-                board[h][w] = 1
-                visited[h][w] = True
+        copy_lab = extend_virus(copy_lab, width, height)
+        safe = count_safe_area(copy_lab, width, height)
+        max_safe = max(max_safe, safe)
 
-                wall_install(board, visited, width, height, wall + 1, safe)
+    return max_safe
 
-                board[h][w] = 0
-                visited[h][w] = False
-            
-    
-board = []
-height, width = map(int, sys.stdin.readline().strip().split())
-for _ in range(height):
+
+lab = []
+h, w = map(int, sys.stdin.readline().strip().split())
+
+for _ in range(h):
     row = list(map(int, sys.stdin.readline().strip().split()))
-    board.append(row)
+    lab.append(row)
 
-safe = []
-visited = [[False] * width for _ in range(height)]
-wall_install(board, visited, width, height, 0, safe)
-print(max(safe))
+
+print(solution(lab, w, h))
