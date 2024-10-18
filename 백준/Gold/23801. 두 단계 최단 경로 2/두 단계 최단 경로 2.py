@@ -1,63 +1,56 @@
-import heapq
 import sys
+import heapq
 
-input = sys.stdin.read
-INF = float('inf')
 
-def dijkstra(start, graph, N):
-    distances = [INF] * (N + 1)
-    distances[start] = 0
-    pq = [(0, start)]  # (거리, 노드)
+def dijkstra(graph, n, start):
+    q = []
+    distances = [float("inf")] * (n + 1)
     
-    while pq:
-        current_distance, current_node = heapq.heappop(pq)
-        
+    distances[start] = 0
+    heapq.heappush(q, (0, start))
+
+    while q:
+        current_distance, current_node = heapq.heappop(q)
+
         if current_distance > distances[current_node]:
             continue
-        
-        for neighbor, weight in graph[current_node]:
+
+        for node, weight in graph[current_node]:
             distance = current_distance + weight
-            
-            if distance < distances[neighbor]:
-                distances[neighbor] = distance
-                heapq.heappush(pq, (distance, neighbor))
-    
+            if distance < distances[node]:
+                distances[node] = distance
+                heapq.heappush(q, (distance, node))
+
     return distances
 
 
-# 입력 처리
-data = input().splitlines()
-N, M = map(int, data[0].split())
+n, m = map(int, sys.stdin.readline().strip().split())
+graph = [[] for _ in range(n + 1)]
 
-graph = [[] for _ in range(N + 1)]
-
-for i in range(1, M + 1):
-    u, v, w = map(int, data[i].split())
+for _ in range(m):
+    u, v, w  = map(int, sys.stdin.readline().strip().split())
     graph[u].append((v, w))
-    graph[v].append((u, w))  # 무방향 그래프
+    graph[v].append((u, w))
 
-X, Z = map(int, data[M + 1].split())
-P = int(data[M + 2])
-middle_nodes = list(map(int, data[M + 3].split()))
+x, z = map(int, sys.stdin.readline().strip().split())
+p = int(sys.stdin.readline().strip())
+mid_point = list(map(int, sys.stdin.readline().strip().split()))
 
-# 1. X에서 모든 노드까지의 최단 경로 계산
-dist_from_X = dijkstra(X, graph, N)
+distance_from_x = dijkstra(graph, n, x)
+distance_from_z = dijkstra(graph, n, z)
 
-# 2. Z에서 모든 노드까지의 최단 경로 계산
-dist_from_Z = dijkstra(Z, graph, N)
+min_distance = float("inf")
 
-# 3. 중간 정점들 중 적어도 하나를 반드시 거쳐야 한다.
-# 중간 정점 중 하나를 거치는 최단 경로를 찾기
-min_total_distance = INF
-for Y in middle_nodes:
-    if dist_from_X[Y] == INF or dist_from_Z[Y] == INF:
+for mid in mid_point:
+    start_x = distance_from_x[mid]
+    start_z = distance_from_z[mid]
+
+    if start_x == float("inf") or start_z == float("inf"):
         continue
-    total_distance = dist_from_X[Y] + dist_from_Z[Y]
-    min_total_distance = min(min_total_distance, total_distance)
+    
+    min_distance = min(min_distance, start_x + start_z)
 
-# 결과 출력
-if min_total_distance == INF:
-    print(-1)
-else:
-    print(min_total_distance)
+if min_distance == float("inf"):
+    min_distance = -1
 
+print(min_distance)
